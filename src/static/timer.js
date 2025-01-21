@@ -13,7 +13,7 @@ let timerDuration = 10 * 60; // 10 minutes in seconds
         const interval = setInterval(() => {
             if (timerDuration <= 0) {
                 clearInterval(interval);
-                timerElement.textContent = "00:00"; // Timer ends at 0
+                timerElement.textContent = "00:00"; // Timer ends at 0           
                 alert("Time's up!");
                 return;
             }
