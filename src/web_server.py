@@ -3,23 +3,17 @@ from flask import Flask, request, jsonify, render_template, redirect, url_for
 
 app = Flask(__name__)
 
+puzzle1Complete = False
+puzzle2Complete = False
 puzzle2Unlocked = False
 
 
-@app.route("/")
-def landingPage():
-    return render_template("Intro.html")
 
-@app.route("/info")
+@app.route("/")
 def info():               
     return render_template("Info.html")
 
-@app.route("/unlockPuzzle2")#, methods=["POST"])
-def unlockPuzzle2():
-    global puzzle2Unlocked
-    puzzle2Unlocked = True
-    print("unlockedpuzzle2")
-    return redirect(url_for("info"))
+
 
 @app.route("/resetSafe")
 def resetSafe():
@@ -37,10 +31,29 @@ def puzzle2():
     if puzzle2Unlocked:
         return render_template("Puzzle2.html")
     else:
-        return redirect(url_for("landingPage"))
+        return redirect(url_for("info"))
 
 
+@app.route("/puzzle1/checkCompletion")
+def checkCompletion():
+    
+    global puzzle1Complete
+    puzzle1Complete = True
+    if puzzle1Complete:
+        global puzzle2Unlocked
+        puzzle2Unlocked = True
+        print("unlockedpuzzle2")
+        return redirect(url_for("puzzle2"))
+    else:
+        return redirect(url_for("info"))
 
+
+@app.route("/victory")
+def checkWin():
+    if puzzle1Complete and puzzle2Complete:
+        return render_template("victory.html")
+    else:
+        return redirect(url_for("info"))
 #BUTTONS
 
 @app.route("/button/<id>")

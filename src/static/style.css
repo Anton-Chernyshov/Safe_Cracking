@@ -1,0 +1,62 @@
+/* General body styling */
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    background-color: #f4f4f4;
+    color: #333;
+}
+
+/* Header styling */
+h1 {
+    font-size: 3rem;
+    margin: 20px 0;
+    color: #222;
+}
+
+p {
+    font-size: 1.5rem;
+    margin: 20px 0;
+    color: #222;
+}
+
+/* Button container styling */
+.button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 40px;
+}
+
+/* Button styling */
+button {
+    font-size: 2rem;
+    padding: 20px 40px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    transition: transform 0.2s, background-color 0.3s;
+    touch-action: manipulation; /* Ensures good responsiveness for touch devices */
+}
+
+    /* Button hover effect */
+    button:hover {
+        background-color: #0056b3;
+        transform: scale(1.05);
+    }
+
+    /* Button focus effect */
+    button:focus {
+        outline: none;
+        box-shadow: 0 0 10px rgba(0, 123, 255, 0.8);
+    }
+div {
+    max-width: 75%;
+    margin: 0 auto;
+    text-align: center;
+}
