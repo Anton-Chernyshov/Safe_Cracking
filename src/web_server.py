@@ -17,7 +17,9 @@ def info():
 
 @app.route("/resetSafe")
 def resetSafe():
-    global puzzle2Unlocked
+    global puzzle1Complete, puzzle2Complete, puzzle2Unlocked
+    puzzle1Complete = False
+    puzzle2Complete = False
     puzzle2Unlocked = False
     return redirect(url_for("info"))
 
@@ -38,14 +40,16 @@ def puzzle2():
 def checkCompletion():
     
     global puzzle1Complete
-    puzzle1Complete = True
-    if puzzle1Complete:
+    puzzle1Complete = False
+
+    if puzzle1Complete: 
         global puzzle2Unlocked
         puzzle2Unlocked = True
+
         print("unlockedpuzzle2")
         return redirect(url_for("puzzle2"))
     else:
-        return redirect(url_for("info"))
+        return redirect(url_for("puzzle1"))
 
 
 @app.route("/victory")
