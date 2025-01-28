@@ -34,7 +34,7 @@ p {
 button {
     font-size: 2rem;
     padding: 20px 40px;
-    background-color: #007BFF;
+    background-color: #333;
     color: white;
     border: none;
     border-radius: 10px;
@@ -46,7 +46,7 @@ button {
 
     /* Button hover effect */
     button:hover {
-        background-color: #0056b3;
+        background-color: #222;
         transform: scale(1.05);
     }
 

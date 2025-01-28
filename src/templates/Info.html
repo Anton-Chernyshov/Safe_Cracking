@@ -1,29 +1,59 @@
-<!--- This page will be used to show WIN/LOSS conditionns, and to show them how much time is left. they can go back to the instructions at any point-->
-
-
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-<link rel="stylesheet" type="text/css" href="../static/style.css">
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Info Page</title>
+    <link rel="stylesheet" type="text/css" href="../static/style.css">
 
 </head>
-
-
-
 <body>
-    <h1> INFO</h1>
-    <!-- PLEASE WRITE THE INSTRUCTIONS BETWEEN HERE -->
-    <p>
-        You are now standing at the heart of an advanced rocket launch facility, with a singular mission. An asteroid of catastrophic proportions, designated 99943 Apep, is on a direct collision course with Earth, if it strikes, the devastation will be total - All multicellular life, extinguished.
-        Our only hope rests in the successful launch of the Aegis rocket, a kinetic deflection system initially designed to defend against ballistic attacks from hostile nations, it can now be repurposed to defend humanity.
-    </p>
-    <!-- AND HERE -->
-    <div id="timer" class="timer">10:00</div>
-    <button onclick="location.href='/puzzle1'"> Puzzle 1</button>
-    <button onclick="location.href='/puzzle2'"> Puzzle 2</button>
-    <button onclick="location.href='/victory'"> wintest</button>
-    <script src="../static/timer.js"></script>
+    <h1>Welcome to the Info Page</h1>
+    <p><span class="timer", id="timer">{{ elapsed_time }}</span></p>
+
+    <button onclick="location.href='{{ url_for('puzzle1') }}'">Go to Puzzle 1</button>
+    <button onclick="location.href='{{ url_for('puzzle2') }}'">Go to Puzzle 2</button>
+
+    <script>
+            // Parse the remaining time from the server
+            let timeParts = document.getElementById("timer").innerText.split(":").map(Number);
+            let hours = timeParts[0];
+            let minutes = timeParts[1];
+            let seconds = timeParts[2];
+
+        // Function to update the timer
+
+            function updateTimer() {
+            if (hours === 0 && minutes === 0 && seconds === 0) {
+                clearInterval(timerInterval);
+            alert("Time's up!");
+            // Optionally redirect: location.href = '/some-page';
+            return;
+            }
+
+            if (seconds === 0) {
+                if (minutes === 0) {
+                hours--;
+            minutes = 59;
+                } else {
+                minutes--;
+                }
+            seconds = 59;
+            } else {
+                seconds--;
+            }
+
+            // Format the time as HH:MM:SS
+            const formattedTime = [
+            hours.toString().padStart(2, "0"),
+            minutes.toString().padStart(2, "0"),
+            seconds.toString().padStart(2, "0")
+            ].join(":");
+            document.getElementById("timer").innerText = formattedTime;
+        }
+
+            // Update the timer every second
+            const timerInterval = setInterval(updateTimer, 1000);
+    </script>
 </body>
-</html >
+</html>
