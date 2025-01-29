@@ -1,6 +1,6 @@
 from flask import Flask, render_template, redirect, url_for, session
 from datetime import datetime, timezone, timedelta
-
+import serial
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Required for session management
 COUNTDOWN_DURATION = timedelta(minutes=10)  # 10 minutes
@@ -31,10 +31,18 @@ def getTime():
 puzzle1Complete = False
 puzzle2Unlocked = False
 puzzle2Complete = False
+serialPath = serial.Serial("/dev/ttyACM0",9600)
+
+def getData() -> list:
+    try:
+        data = serialPath.readine().decode("utf-8").split(",")
+        return data
+    except:
 
 
 @app.route('/')
 def info():
+    print(getData())
     elapsed_time = getTime()
     return render_template('Info.html', elapsed_time=elapsed_time)
 
