@@ -5,12 +5,12 @@ from gpiozero import Servo
 from gpiozero import Button
 
 rocketLaunchCode = "1234"
-lockingServo = (Servo(4), 0) # 0 is locked, 1 is unlocked
-rocketServo = (Servo(5), 0) # 0 is locked, 1 is unlocked
-puzzle2Pin = Button(6)
-rocketLaunchPin = Button(7)
+lockingServo = (Servo(2), 0) # 0 is locked, 1 is unlocked
+rocketServo = (Servo(3  ), 0) # 0 is locked, 1 is unlocked
+puzzle2Pin = Button(14)
+rocketLaunchPin = Button(15)
 
-rocketLaunchPin.when_unpressed = lambda : unlockServo(rocketServo)
+rocketLaunchPin.when_released = lambda : unlockServo(rocketServo)
 rocketLaunchPin.when_pressed = lambda : lockServo(rocketServo)
 
 def lockServo(servo : tuple[Servo, int]):
@@ -139,7 +139,7 @@ def checkCompletion2():
     if puzzle2Pin.is_pressed:
         puzzle2Complete = True
     if puzzle2Complete: 
-        return redirect(url_for("victory"))
+        return redirect(url_for("checkWin"))
     else:
         return redirect(url_for("puzzle2"))
 
