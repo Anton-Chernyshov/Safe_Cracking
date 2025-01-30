@@ -4,12 +4,14 @@ import serial
 from gpiozero import Servo
 from gpiozero import Button
 
-launchCode = "1234"
+rocketLaunchCode = "1234"
 lockingServo = (Servo(4), 0) # 0 is locked, 1 is unlocked
 rocketServo = (Servo(5), 0) # 0 is locked, 1 is unlocked
-puzzle1Pin = Button(6)
-puzzle2Pin = Button(7)
+puzzle2Pin = Button(6)
+rocketLaunchPin = Button(7)
 
+rocketLaunchPin.when_unpressed = lambda : unlockServo(rocketServo)
+rocketLaunchPin.when_pressed = lambda : lockServo(rocketServo)
 
 def lockServo(servo : tuple[Servo, int]):
     servo[0].min()
@@ -66,10 +68,10 @@ puzzle2Unlocked = False
 puzzle2Complete = False
 serialPath = serial.Serial("/dev/ttyACM0",9600)
 
-def getData() -> list:
+def getData() -> int:
     try:
         global serialPath
-        data = serialPath.readline().decode("utf-8").split(",")
+        data = serialPath.readline().decode("utf-8")
         return data
     except Exception as e:
         print(e)
@@ -118,7 +120,8 @@ def unlock_puzzle2():
 def checkCompletion():
     
     global puzzle1Complete
-    puzzle1Complete = False
+    if getData() == "1":
+        puzzle1Complete = True
 
     if puzzle1Complete: 
         global puzzle2Unlocked
@@ -133,8 +136,8 @@ def checkCompletion():
 def checkCompletion2():
     
     global puzzle2Complete
-    puzzle2Complete = False
-
+    if puzzle2Pin.is_pressed:
+        puzzle2Complete = True
     if puzzle2Complete: 
         return redirect(url_for("victory"))
     else:
@@ -143,7 +146,7 @@ def checkCompletion2():
 @app.route("/launchCode")
 def launchCode():
 
-    return render_template("code.html", LAUNCH_CODE=launchCode)
+    return render_template("code.html", LAUNCH_CODE=rocketLaunchCode)
 
 @app.route("/victory")
 def checkWin():
