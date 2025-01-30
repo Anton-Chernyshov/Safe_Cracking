@@ -1,10 +1,43 @@
 from flask import Flask, render_template, redirect, url_for, session
 from datetime import datetime, timezone, timedelta
 import serial
+from gpiozero import Servo
+from gpiozero import Button
+
+launchCode = "1234"
+lockingServo = (Servo(4), 0) # 0 is locked, 1 is unlocked
+rocketServo = (Servo(5), 0) # 0 is locked, 1 is unlocked
+puzzle1Pin = Button(6)
+puzzle2Pin = Button(7)
+
+
+def lockServo(servo : tuple[Servo, int]):
+    servo[0].min()
+    servo[1] = 0
+    return None
+
+def unlockServo(servo : tuple[Servo, int]):
+    servo[0].max()
+    servo[1] = 1
+    return None
+
+def toggleServo(servo : tuple[Servo, int]):
+    if servo[1] == 0:
+        unlockServo(servo)
+    else:
+        lockServo(servo)
+    return None
+
+
+
+
+
 app = Flask(__name__)
+
 app.secret_key = 'your_secret_key'  # Required for session management
 COUNTDOWN_DURATION = timedelta(minutes=10)  # 10 minutes
 # Initialize the timer in the session
+
 def initialize_timer():
     if 'start_time' not in session:
         # Store the current time as a string
@@ -35,10 +68,11 @@ serialPath = serial.Serial("/dev/ttyACM0",9600)
 
 def getData() -> list:
     try:
-        data = serialPath.readine().decode("utf-8").split(",")
+        global serialPath
+        data = serialPath.readline().decode("utf-8").split(",")
         return data
-    except:
-
+    except Exception as e:
+        print(e)
 
 @app.route('/')
 def info():
@@ -60,7 +94,7 @@ def puzzle2():
         return redirect(url_for('info'))
     
 
-
+####### TEST FUNCTIONS REMOVE
 @app.route("/testPuzzle1")
 def testPuzzle1():
     global puzzle1Complete
@@ -78,7 +112,7 @@ def unlock_puzzle2():
     global puzzle2Unlocked
     puzzle2Unlocked = True
     return redirect(url_for('puzzle2'))
-
+########################################
 
 @app.route("/puzzle1/checkCompletion")
 def checkCompletion():
@@ -95,10 +129,26 @@ def checkCompletion():
     else:
         return redirect(url_for("puzzle1"))
 
+@app.route("/puzzle2/checkCompletion")
+def checkCompletion2():
+    
+    global puzzle2Complete
+    puzzle2Complete = False
+
+    if puzzle2Complete: 
+        return redirect(url_for("victory"))
+    else:
+        return redirect(url_for("puzzle2"))
+
+@app.route("/launchCode")
+def launchCode():
+
+    return render_template("code.html", LAUNCH_CODE=launchCode)
 
 @app.route("/victory")
 def checkWin():
     if puzzle1Complete and puzzle2Complete:
+        unlockServo(lockingServo)
         return render_template("victory.html")
     else:
         return redirect(url_for("info"))
@@ -106,13 +156,20 @@ def checkWin():
 
 @app.route('/reset-timer')
 def reset_timer():
+
     session['start_time'] = datetime.now(timezone.utc).isoformat()
+
+    # CODE HERE TO RESET THE SAFE  (counterintuitive, i know)
+
+    lockServo(rocketServo)
+    lockServo(lockingServo)
+
     return redirect(url_for('info'))
 
 
 @app.route("/resetSafe")
 def resetSafe():
-    
+
     return render_template("resetSafe.html")
 
 if __name__ == '__main__':
