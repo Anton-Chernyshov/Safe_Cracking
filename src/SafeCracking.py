@@ -5,7 +5,18 @@ from gpiozero import AngularServo, Button
 from time import sleep
 from random import randint
 
+"""
+###############################################
+TO DO:
+ - figure out why puzzle 2 is not working
+ - add victory screen once code has been entered
+ - do the key
+ - SERVOS!!!!
 
+
+
+
+"""
 
 ############## SERVO HANDLING & PUZZLE 2
 
@@ -70,8 +81,7 @@ def key_pressed(key):
         print("Code entry cleared.")
     else:
         entered_code += key  # Append key to entered code
-        if len(entered_code) > 4:  # Limit code to 4 digits
-            entered_code = entered_code[-4:]
+        
 
 def check_launch_code(code):
     """Validates the entered launch code."""
@@ -168,8 +178,8 @@ def checkCompletion():
 
 @app.route("/puzzle2/checkCompletion")
 def checkCompletion2():
-    global puzzle2_complete_flag
-    if puzzle2_complete_flag:
+    
+    if puzzle2Pin.is_active:
         session["puzzle2Complete"] = True
     
     if session.get("puzzle2Complete", False):
