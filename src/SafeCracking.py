@@ -52,6 +52,7 @@ def toggleServo(servo: list):
 
 
 
+
 ############## CODE HANDLING
 from pad4pi import rpi_gpio
 rocketLaunchCode = "7355608" # lulz
@@ -260,6 +261,18 @@ def unlock_puzzle2():
     return redirect(url_for('puzzle2'))
 
 
+@app.route("/secret/toggleServo/<servo>")
+def toggleWebServo(servo):
+    if servo == "lockingServo":
+        servo = lockingServo
+    elif servo == "rocketServo":
+        servo = rocketServo
+    else:
+        print("uhoh")
+        return redirect(url_for("info"))
+    print(f"toglging {servo}")
+    toggleServo(servo)
+    return redirect(url_for("info"))
 
 ############ run the app
 if __name__ == '__main__':
