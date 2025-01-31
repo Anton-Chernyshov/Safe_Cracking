@@ -1,8 +1,8 @@
 
 
 
-int Puzzle1Pin = A1;
-int Puzzle2Pin = A2;
+int Puzzle1Pin = A3;
+
 
 
 
@@ -13,24 +13,17 @@ void setup() {
 void loop() {
 
 
-	unsigned float Voltage1 = analogRead(Puzzle1Pin) * (5.0 / 1023.0);
-	unsigned float Voltage2 = analogRead(Puzzle2Pin) * (5.0 / 1023.0);
+	float Voltage1 = analogRead(Puzzle1Pin) * (5.0 / 1023.0);
 
-	if (Voltage1 > 3.1 && Voltage1 < 3.5) { // checks if the voltage is between 3.1 and 3.5 ( 3.3V is the standard voltage for a logic 1)
-		Serial.print("1");
+	if (Voltage1 > 2.25 && Voltage1 < 2.45) { // checks if the voltage is between 3.1 and 3.5 ( 3.3V is the standard voltage for a logic 1)
+		Serial.println("1");
 	}
 	else {
-		Serial.print("0");
+		Serial.println("0");
 	}
 
-	Serial.print(","); // sep 
-
-	if (Voltage2 > 3.1 && Voltage2 < 3.5) { // checks if the voltage is between 3.1 and 3.5 ( 3.3V is the standard voltage for a logic 1)
-		Serial.print("1");
+	
 	}
-	else {
-		Serial.print("0");
-	}
-	Serial.println();
+delay(50);
 	// output in the form of 1,0
 }

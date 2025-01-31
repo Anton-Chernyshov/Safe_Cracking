@@ -3,19 +3,19 @@ from datetime import datetime, timezone, timedelta
 import serial
 from gpiozero import AngularServo, Button
 from time import sleep
-
+from random import randint
 
 
 
 ############## SERVO HANDLING & PUZZLE 2
 
-lockingServo = [AngularServo(2, min_angle=0, max_angle=90), 0]  # 0° locked, 90° unlocked
-rocketServo = [AngularServo(3, min_angle=0, max_angle=90), 0]  # 0° locked, 90° unlocked
+lockingServo = [AngularServo(2, min_angle=0, max_angle=90), 0]  # 0 locked, 90 unlocked
+rocketServo = [AngularServo(3, min_angle=0, max_angle=90), 0]  # 0  locked, 90 unlocked
 
 puzzle2Pin = Button(14)
 rocketLaunchPin = Button(15)
 
-rocketLaunchPin.when_unpressed = lambda : unlockServo(rocketServo)
+rocketLaunchPin.when_released = lambda : unlockServo(rocketServo)
 rocketLaunchPin.when_pressed = lambda : lockServo(rocketServo)
 
 def lockServo(servo: list):
@@ -42,9 +42,9 @@ def toggleServo(servo: list):
 
 
 ############## CODE HANDLING
-from pad4pi import Keypad
-rocketLaunchCode = "1234"
-
+from pad4pi import rpi_gpio
+rocketLaunchCode = "7355608" # lulz
+launchCodeEntered = False
 entered_code = ""
 
 KEYPAD = [
@@ -55,7 +55,7 @@ KEYPAD = [
 ]
 ROW_PINS = [5, 6, 13, 19]
 COL_PINS = [12, 16, 20, 21]
-factory = Keypad.factory()
+factory = rpi_gpio.KeypadFactory()
 keypad = factory.create_keypad(keypad=KEYPAD, row_pins=ROW_PINS, col_pins=COL_PINS)
 
 def key_pressed(key):
@@ -75,10 +75,11 @@ def key_pressed(key):
 
 def check_launch_code(code):
     """Validates the entered launch code."""
+    global launchCodeEntered
     if code == rocketLaunchCode:
         print("Correct Code! Unlocking Rocket")
-        unlockServo(rocketServo)  # Unlock the rocket
-        session["launchCodeEntered"] = True  # Mark as entered
+        unlockServo(lockingServo)  # Unlock the rocket
+        launchCodeEntered = True  # Mark as entered
     else:
         print("Incorrect Code. Try Again.")
 
@@ -176,14 +177,6 @@ def checkCompletion2():
     
     return redirect(url_for("puzzle2"))
 
-puzzle2_complete_flag = False  # Add a global flag
-
-def check_puzzle2():
-    global puzzle2_complete_flag
-    puzzle2_complete_flag = True
-    print("Puzzle 2 Completed!")
-
-puzzle2Pin.when_pressed = check_puzzle2
 
 @app.route("/launchCode")
 def launchCode():
@@ -227,6 +220,10 @@ def reset_timer():
     lockServo(rocketServo)
     lockServo(lockingServo)
 
+    # generate new launch code
+    global rocketLaunchCode
+    rocketLaunchCode = str(randint(1000000, 9999999))
+    print(f"New Launch Code: {rocketLaunchCode}")
     return redirect(url_for('info'))
 
 
