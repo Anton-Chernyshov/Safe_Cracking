@@ -20,8 +20,8 @@ TO DO:
 
 ############## SERVO HANDLING & PUZZLE 2
 
-lockingServo = [AngularServo(2, min_angle=0, max_angle=90), 0]  # 0 locked, 90 unlocked
-rocketServo = [AngularServo(3, min_angle=0, max_angle=90), 0]  # 0  locked, 90 unlocked
+lockingServo = [AngularServo(2, min_angle=0, max_angle=90, initial_angle=0), 0]  
+rocketServo = [AngularServo(3, min_angle=0, max_angle=90, initial_angle=0)]
 
 puzzle2Pin = Button(14)
 rocketLaunchPin = Button(15)
@@ -31,17 +31,19 @@ rocketLaunchPin.when_pressed = lambda : lockServo(rocketServo)
 
 def lockServo(servo: list):
     """Lock the servo (move to 0 degrees)."""
-    if servo[1] != 0:  # Prevent redundant movements
+    if servo[1] != 0:
         servo[0].angle = 0
+        sleep(0.3)
+        servo[0].angle = None  # Disable PWM after moving
         servo[1] = 0
-        sleep(0.2)  # Small delay to allow the servo to settle
 
 def unlockServo(servo: list):
     """Unlock the servo (move to 90 degrees)."""
     if servo[1] != 1:
         servo[0].angle = 90
+        sleep(0.3)
+        servo[0].angle = None  # Disable PWM after moving
         servo[1] = 1
-        sleep(0.2)
 
 def toggleServo(servo: list):
     """Toggle the servo state."""
