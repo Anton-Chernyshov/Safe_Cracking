@@ -1,38 +1,95 @@
 from flask import Flask, render_template, redirect, url_for, session
 from datetime import datetime, timezone, timedelta
 import serial
-from gpiozero import Servo
-from gpiozero import Button
+from gpiozero import AngularServo, Button
+from time import sleep
 
-rocketLaunchCode = "1234"
-lockingServo = (Servo(2), 0) # 0 is locked, 1 is unlocked
-rocketServo = (Servo(3  ), 0) # 0 is locked, 1 is unlocked
+
+
+
+############## SERVO HANDLING & PUZZLE 2
+
+lockingServo = [AngularServo(2, min_angle=0, max_angle=90), 0]  # 0° locked, 90° unlocked
+rocketServo = [AngularServo(3, min_angle=0, max_angle=90), 0]  # 0° locked, 90° unlocked
+
 puzzle2Pin = Button(14)
 rocketLaunchPin = Button(15)
 
-rocketLaunchPin.when_released = lambda : unlockServo(rocketServo)
+rocketLaunchPin.when_unpressed = lambda : unlockServo(rocketServo)
 rocketLaunchPin.when_pressed = lambda : lockServo(rocketServo)
 
-def lockServo(servo : tuple[Servo, int]):
-    servo[0].min()
-    servo[1] = 0
-    return None
+def lockServo(servo: list):
+    """Lock the servo (move to 0 degrees)."""
+    if servo[1] != 0:  # Prevent redundant movements
+        servo[0].angle = 0
+        servo[1] = 0
+        sleep(0.2)  # Small delay to allow the servo to settle
 
-def unlockServo(servo : tuple[Servo, int]):
-    servo[0].max()
-    servo[1] = 1
-    return None
+def unlockServo(servo: list):
+    """Unlock the servo (move to 90 degrees)."""
+    if servo[1] != 1:
+        servo[0].angle = 90
+        servo[1] = 1
+        sleep(0.2)
 
-def toggleServo(servo : tuple[Servo, int]):
+def toggleServo(servo: list):
+    """Toggle the servo state."""
     if servo[1] == 0:
         unlockServo(servo)
     else:
         lockServo(servo)
-    return None
+
+
+
+############## CODE HANDLING
+from pad4pi import Keypad
+rocketLaunchCode = "1234"
+
+entered_code = ""
+
+KEYPAD = [
+    ["1", "2", "3", "A"],
+    ["4", "5", "6", "B"],
+    ["7", "8", "9", "C"],
+    ["*", "0", "#", "D"]
+]
+ROW_PINS = [5, 6, 13, 19]
+COL_PINS = [12, 16, 20, 21]
+factory = Keypad.factory()
+keypad = factory.create_keypad(keypad=KEYPAD, row_pins=ROW_PINS, col_pins=COL_PINS)
+
+def key_pressed(key):
+    """Handles key presses from the 4x4 matrix keypad."""
+    global entered_code
+
+    if key == "#":  # Check code when "#" is pressed
+        check_launch_code(entered_code)
+        entered_code = ""  # Reset after checking
+    elif key == "*":  # Clear entry when "*" is pressed
+        entered_code = ""
+        print("Code entry cleared.")
+    else:
+        entered_code += key  # Append key to entered code
+        if len(entered_code) > 4:  # Limit code to 4 digits
+            entered_code = entered_code[-4:]
+
+def check_launch_code(code):
+    """Validates the entered launch code."""
+    if code == rocketLaunchCode:
+        print("Correct Code! Unlocking Rocket")
+        unlockServo(rocketServo)  # Unlock the rocket
+        session["launchCodeEntered"] = True  # Mark as entered
+    else:
+        print("Incorrect Code. Try Again.")
+
+# Attach keypress function to keypad
+keypad.registerKeyPressHandler(key_pressed)
 
 
 
 
+
+################# FLASK APP
 
 app = Flask(__name__)
 
@@ -66,15 +123,16 @@ def getTime():
 puzzle1Complete = False
 puzzle2Unlocked = False
 puzzle2Complete = False
-serialPath = serial.Serial("/dev/ttyACM0",9600)
+serialPath = serial.Serial("/dev/ttyACM0",9600, timeout=1)
 
-def getData() -> int:
+def getData() -> str:
     try:
         global serialPath
         data = serialPath.readline().decode("utf-8")
         return data
     except Exception as e:
-        print(e)
+        print(f"Serial Error: {e}")
+        return "0"
 
 @app.route('/')
 def info():
@@ -89,59 +147,43 @@ def puzzle1():
 
 @app.route('/puzzle2')
 def puzzle2():
-    if puzzle2Unlocked:
+    if session.get("puzzle2Unlocked", False):  # Use session instead of global variable
         elapsed_time = getTime()
         return render_template('Puzzle2.html', elapsed_time=elapsed_time)
-    else:
-        return redirect(url_for('info'))
+    return redirect(url_for('info'))
     
-
-####### TEST FUNCTIONS REMOVE
-@app.route("/testPuzzle1")
-def testPuzzle1():
-    global puzzle1Complete
-    puzzle1Complete = True
-    return redirect(url_for("puzzle1"))
-
-@app.route("/testPuzzle2")
-def testPuzzle2():
-    global puzzle2Complete
-    puzzle2Complete = True
-    return redirect(url_for("puzzle2"))
-
-@app.route('/unlockPuzzle2')
-def unlock_puzzle2():
-    global puzzle2Unlocked
-    puzzle2Unlocked = True
-    return redirect(url_for('puzzle2'))
-########################################
-
 @app.route("/puzzle1/checkCompletion")
 def checkCompletion():
-    
-    global puzzle1Complete
-    if getData() == "1":
-        puzzle1Complete = True
+    for _ in range(5):  
+        data = getData().strip()  # Strip unwanted characters
+        if data == "1":
+            session["puzzle1Complete"] = True
+            break
 
-    if puzzle1Complete: 
-        global puzzle2Unlocked
-        puzzle2Unlocked = True
-
-        print("unlockedpuzzle2")
+    if session.get("puzzle1Complete", False):
+        session["puzzle2Unlocked"] = True
         return redirect(url_for("puzzle2"))
-    else:
-        return redirect(url_for("puzzle1"))
+    return redirect(url_for("puzzle1"))
 
 @app.route("/puzzle2/checkCompletion")
 def checkCompletion2():
+    global puzzle2_complete_flag
+    if puzzle2_complete_flag:
+        session["puzzle2Complete"] = True
     
-    global puzzle2Complete
-    if puzzle2Pin.is_pressed:
-        puzzle2Complete = True
-    if puzzle2Complete: 
-        return redirect(url_for("checkWin"))
-    else:
-        return redirect(url_for("puzzle2"))
+    if session.get("puzzle2Complete", False):
+        return redirect(url_for("launchCode"))  # Go to launch code page FIRST
+    
+    return redirect(url_for("puzzle2"))
+
+puzzle2_complete_flag = False  # Add a global flag
+
+def check_puzzle2():
+    global puzzle2_complete_flag
+    puzzle2_complete_flag = True
+    print("Puzzle 2 Completed!")
+
+puzzle2Pin.when_pressed = check_puzzle2
 
 @app.route("/launchCode")
 def launchCode():
@@ -150,20 +192,38 @@ def launchCode():
 
 @app.route("/victory")
 def checkWin():
-    if puzzle1Complete and puzzle2Complete:
-        unlockServo(lockingServo)
+    if session.get("puzzle1Complete") and session.get("puzzle2Complete") and session.get("launchCodeEntered", False):
+        if not session.get("safeUnlocked", False):  # Only unlock once
+            unlockServo(lockingServo)
+            session["safeUnlocked"] = True  # Mark as unlocked
         return render_template("victory.html")
+    
+    return redirect(url_for("launchCode"))  # Ensure they see the launch code first
+
+@app.route("/submitCode/<code>")
+def submitCode(code):
+    """Check if entered code is correct and mark launch as ready."""
+    if code == rocketLaunchCode:
+        session["launchCodeEntered"] = True  # Mark as entered
+        unlockServo(rocketServo)  # Unlock rocket if code is correct
+        return redirect(url_for("victory"))  # Now allow victory
     else:
-        return redirect(url_for("info"))
+        return redirect(url_for("launchCode"))  # Stay on code page if wrong
+
+
 
 
 @app.route('/reset-timer')
 def reset_timer():
+    session["start_time"] = datetime.now(timezone.utc).isoformat()
 
-    session['start_time'] = datetime.now(timezone.utc).isoformat()
+    # Reset puzzle states
+    session["puzzle1Complete"] = False
+    session["puzzle2Complete"] = False
+    session["puzzle2Unlocked"] = False
+    session["safeUnlocked"] = False
 
-    # CODE HERE TO RESET THE SAFE  (counterintuitive, i know)
-
+    # Reset physical locks
     lockServo(rocketServo)
     lockServo(lockingServo)
 
@@ -175,5 +235,25 @@ def resetSafe():
 
     return render_template("resetSafe.html")
 
+
+####### TEST FUNCTIONS REMOVE
+@app.route("/testPuzzle1")
+def testPuzzle1():
+    session["puzzle1Complete"] = True
+    return redirect(url_for("puzzle1"))
+
+@app.route("/testPuzzle2")
+def testPuzzle2():
+    session["puzzle2Complete"] = True
+    return redirect(url_for("puzzle2"))
+
+@app.route('/unlockPuzzle2')
+def unlock_puzzle2():
+    session["puzzle2Unlocked"] = True
+    return redirect(url_for('puzzle2'))
+
+
+
+############ run the app
 if __name__ == '__main__':
     app.run(debug=True)
