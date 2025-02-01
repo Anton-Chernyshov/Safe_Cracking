@@ -1,7 +1,8 @@
 from flask import Flask, render_template, redirect, url_for, session
 from datetime import datetime, timezone, timedelta
 import serial
-from gpiozero import AngularServo, Button
+#from gpiozero import AngularServo, Button
+import RPi.GPIO as GPIO
 from time import sleep
 from random import randint
 
@@ -18,39 +19,52 @@ TO DO:
 
 """
 
+######## ASSIGNMENTS OF PINS ###########
+LOCKING_SERVO_PIN = 2
+ROCKET_SERVO_PIN = 3
+PUZZLE_2_DETECTION_PIN = 14
+ROCKET_LAUNCH_KEY_PIN = 15
+
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(LOCKING_SERVO_PIN, GPIO.OUT)
+GPIO.setup(ROCKET_SERVO_PIN, GPIO.OUT)
+GPIO.setup(PUZZLE_2_DETECTION_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(ROCKET_LAUNCH_KEY_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+lockingServoPWM = GPIO.PWM(LOCKING_SERVO_PIN, 50)  
+rocketServoPWM = GPIO.PWM(ROCKET_SERVO_PIN, 50)
+lockingServoPWM.start(0)
+rocketServoPWM.start(0)
+lockingServoState = 0  # 0 is locked, 1 is unlocked
+rocketServoState = 0
+
 ############## SERVO HANDLING & PUZZLE 2
 
-lockingServo = [AngularServo(2, min_angle=0, max_angle=90, initial_angle=0), 0]  
-rocketServo = [AngularServo(3, min_angle=0, max_angle=90, initial_angle=0)]
+def setServoAngle(pwm, angle):
+    """Convert angle to duty cycle and move servo"""
+    duty = 2 + (angle / 18)  # Convert angle to duty cycle (0-180 maps to ~2-12%)
+    pwm.ChangeDutyCycle(duty)
+    sleep(0.3)  # Wait for servo to move
+    pwm.ChangeDutyCycle(0)  # Stop sending PWM signal (prevents jitter)
 
-puzzle2Pin = Button(14)
-rocketLaunchPin = Button(15)
+def lockServo(pwm):
+    """Moves servo to locked (0 degrees)"""
+    print("Locking Servo")
+    setServoAngle(pwm, 0)
 
-rocketLaunchPin.when_released = lambda : unlockServo(rocketServo)
-rocketLaunchPin.when_pressed = lambda : lockServo(rocketServo)
+def unlockServo(pwm):
+    """Moves servo to unlocked (90 degrees)"""
+    print("Unlocking Servo")
+    setServoAngle(pwm, 90)
 
-def lockServo(servo: list):
-    """Lock the servo (move to 0 degrees)."""
-    if servo[1] != 0:
-        servo[0].angle = 0
-        sleep(0.3)
-        servo[0].angle = None  # Disable PWM after moving
-        servo[1] = 0
-
-def unlockServo(servo: list):
-    """Unlock the servo (move to 90 degrees)."""
-    if servo[1] != 1:
-        servo[0].angle = 90
-        sleep(0.3)
-        servo[0].angle = None  # Disable PWM after moving
-        servo[1] = 1
-
-def toggleServo(servo: list):
-    """Toggle the servo state."""
-    if servo[1] == 0:
-        unlockServo(servo)
+def toggleServo(pwm, state):
+    """Toggles servo state between 0 (locked) and 90 (unlocked)"""
+    if state == 0:
+        unlockServo(pwm)
+        return 1  # Update state to unlocked
     else:
-        lockServo(servo)
+        lockServo(pwm)
+        return 0  # Update state to locked
 
 
 
@@ -91,7 +105,7 @@ def check_launch_code(code):
     global launchCodeEntered
     if code == rocketLaunchCode:
         print("Correct Code! Unlocking Rocket")
-        unlockServo(lockingServo)  # Unlock the rocket
+        unlockServo(lockingServoPWM)  # Unlock the rocket
         launchCodeEntered = True  # Mark as entered
     else:
         print("Incorrect Code. Try Again.")
@@ -182,7 +196,7 @@ def checkCompletion():
 @app.route("/puzzle2/checkCompletion")
 def checkCompletion2():
     
-    if puzzle2Pin.is_active:
+    if GPIO.input(PUZZLE_2_DETECTION_PIN) == GPIO.HIGH:
         session["puzzle2Complete"] = True
     
     if session.get("puzzle2Complete", False):
@@ -200,7 +214,8 @@ def launchCode():
 def checkWin():
     if session.get("puzzle1Complete") and session.get("puzzle2Complete") and session.get("launchCodeEntered", False):
         if not session.get("safeUnlocked", False):  # Only unlock once
-            unlockServo(lockingServo)
+            unlockServo(lockingServoPWM)  # Unlock the safe
+            unlockServo(rocketServoPWM)  # Unlock the rocket (again)
             session["safeUnlocked"] = True  # Mark as unlocked
         return render_template("victory.html")
     
@@ -211,7 +226,7 @@ def submitCode(code):
     """Check if entered code is correct and mark launch as ready."""
     if code == rocketLaunchCode:
         session["launchCodeEntered"] = True  # Mark as entered
-        unlockServo(rocketServo)  # Unlock rocket if code is correct
+        unlockServo(rocketServoPWM)  # Unlock rocket if code is correct
         return redirect(url_for("victory"))  # Now allow victory
     else:
         return redirect(url_for("launchCode"))  # Stay on code page if wrong
@@ -230,8 +245,8 @@ def reset_timer():
     session["safeUnlocked"] = False
 
     # Reset physical locks
-    lockServo(rocketServo)
-    lockServo(lockingServo)
+    lockServo(rocketServoPWM)
+    lockServo(lockingServoPWM)
 
     # generate new launch code
     global rocketLaunchCode
@@ -263,17 +278,48 @@ def unlock_puzzle2():
     return redirect(url_for('puzzle2'))
 
 
-@app.route("/secret/toggleServo/<servo>")
-def toggleWebServo(servo):
+@app.route("/secret/unlockServo/<servo>")
+def unlockWebServo(servo):
     if servo == "lockingServo":
-        servo = lockingServo
+        servo = lockingServoPWM
     elif servo == "rocketServo":
-        servo = rocketServo
+        servo = rocketServoPWM
     else:
         print("uhoh")
         return redirect(url_for("info"))
-    print(f"toglging {servo}")
-    toggleServo(servo)
+    print(f"unlocking {servo}")
+    unlockServo(servo)
+    return redirect(url_for("info"))
+
+@app.route("/secret/lockServo/<servo>")
+def lockWebServo(servo):
+    if servo == "lockingServo":
+        servo = lockingServoPWM
+    elif servo == "rocketServo":
+        servo = rocketServoPWM
+    else:
+        print("uhoh")
+        return redirect(url_for("info"))
+    print(f"locking {servo}")
+    lockServo(servo)
+    return redirect(url_for("info"))
+
+@app.route("/secret/toggleServo/<servo>")
+def toggleWebServo(servo):
+    global lockingServoState, rocketServoState
+
+    if servo == "lockingServo":
+        servo = lockingServoPWM
+        state = lockingServoState
+        lockingServoState = toggleServo(servo, state)
+    elif servo == "rocketServo":
+        servo = rocketServoPWM
+        state = rocketServoState
+        rocketServoState = toggleServo(servo, state)
+    else:
+        print("uhoh")
+        return redirect(url_for("info"))
+    print(f"toggling {servo}")
     return redirect(url_for("info"))
 
 ############ run the app
