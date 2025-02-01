@@ -9,12 +9,8 @@ from random import randint
 """
 ###############################################
 TO DO:
- - figure out why puzzle 2 is not working
  - add victory screen once code has been entered
- - do the key
- - SERVOS!!!!
-
-
+ - do the key, key will be added to the ground of the servo ( when tunred the servo wil snap to the correct angle and win.)
 
 
 """
@@ -221,15 +217,7 @@ def checkWin():
     
     return redirect(url_for("launchCode"))  # Ensure they see the launch code first
 
-@app.route("/submitCode/<code>")
-def submitCode(code):
-    """Check if entered code is correct and mark launch as ready."""
-    if code == rocketLaunchCode:
-        session["launchCodeEntered"] = True  # Mark as entered
-        unlockServo(rocketServoPWM)  # Unlock rocket if code is correct
-        return redirect(url_for("victory"))  # Now allow victory
-    else:
-        return redirect(url_for("launchCode"))  # Stay on code page if wrong
+
 
 
 
