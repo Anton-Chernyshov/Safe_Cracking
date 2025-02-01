@@ -17,6 +17,10 @@ rocketServoPWM = GPIO.PWM(ROCKET_SERVO_PIN, 50)
 lockingServoPWM.start(0)
 rocketServoPWM.start(0)
 
+# Track Servo States
+lockingServoState = 0  # 0 = Locked, 1 = Unlocked
+rocketServoState = 0
+
 def setServoAngle(pwm, angle):
     """Convert angle to duty cycle and move servo"""
     duty = 2 + (angle / 18)  # Convert angle to duty cycle (0-180 maps to ~2-12%)
@@ -35,20 +39,21 @@ def unlockServo(pwm):
     setServoAngle(pwm, 90)
 
 def toggleServo(pwm, state):
-    """Toggles servo state (0↔90 degrees)"""
+    """Toggles servo state between 0° (locked) and 90° (unlocked)"""
     if state == 0:
         unlockServo(pwm)
-        return 1
+        return 1  # Update state to unlocked
     else:
         lockServo(pwm)
-        return 0
+        return 0  # Update state to locked
 
 # Example: Lock Servos on Start
 lockServo(lockingServoPWM)
 lockServo(rocketServoPWM)
 
 while True:
-    # Example: Toggle Servos on Button Press
     input("Press Enter to toggle servos...")
-    lockingServoPWM_state = toggleServo(lockingServoPWM, 0)
-    rocketServoPWM_state = toggleServo(rocketServoPWM, 0)
+
+    # Toggle servos and update their states
+    lockingServoState = toggleServo(lockingServoPWM, lockingServoState)
+    rocketServoState = toggleServo(rocketServoPWM, rocketServoState)
