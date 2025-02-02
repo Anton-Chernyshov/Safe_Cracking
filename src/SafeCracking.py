@@ -222,16 +222,9 @@ def launchCode():
 
     return render_template("code.html", LAUNCH_CODE=rocketLaunchCode)
 
-#@app.route("/victory")
-#def checkWin():
-#    if session.get("puzzle1Complete") and session.get("puzzle2Complete") and session.get("launchCodeEntered", False):
-#        if not session.get("safeUnlocked", False):  # Only unlock once
-#            unlockServo(lockingServoPWM)  # Unlock the safe
-#            unlockServo(rocketServoPWM)  # Unlock the rocket (again)
-#            session["safeUnlocked"] = True  # Mark as unlocked
-#        return render_template("victory.html")
-#   
-#    return redirect(url_for("launchCode"))  # Ensure they see the launch code first
+@app.route("/victory")
+def checkWin():
+    return render_template("victory.html")
 
 
 
