@@ -223,7 +223,7 @@ def launchCode():
     return render_template("code.html", LAUNCH_CODE=rocketLaunchCode)
 
 @app.route("/victory")
-def checkWin():
+def victory():
     return render_template("victory.html")
 
 
