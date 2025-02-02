@@ -6,11 +6,11 @@
 <body>
     <h1>LAUNCH!!!!!</h1>
     <div>
-        <p>Congratulations! You need to launch the rocket using the code:</p>
-        <h1>{{ LAUNCH_CODE }}</h1>
-        <p>Enter the code on the keypad and press **#** to confirm.</p>ok
+        <p>Congratulations! HQ has sent You need to launch the rocket using the code:</p>
+        <h1 style="color: red;">{{ LAUNCH_CODE }}</h1>
+        <p>Enter the code on the keypad and press <b>#</b> to confirm.</p>
     </div>
-    <    <button onclick="location.href='{{ url_for('victory') }}'">End Screen</button>
+    <button onclick="location.href='{{ url_for('victory') }}'">End Screen</button>
 
 </body>
 </html>
