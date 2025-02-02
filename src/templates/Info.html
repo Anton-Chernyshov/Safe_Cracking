@@ -8,9 +8,12 @@
 
 </head>
 <body>
-    <h1>Welcome to the Info Page</h1>
+    <h1>INSTRUCTIONS</h1>
     <p><span class="timer", id="timer">{{ elapsed_time }}</span></p>
-
+    <p>
+        You are now standing at the heart of an advanced rocket launch facility, with a singular mission. An asteroid of catastrophic proportions, designated 99943 Apep, is on a direct collision course with Earth, if it strikes, the devastation will be total - All multicellular life, extinguished.
+        Our only hope rests in the successful launch of the Aegis rocket, a kinetic deflection system initially designed to defend against ballistic attacks from hostile nations, it can now be repurposed to defend humanity.
+    </p>
     <button onclick="location.href='{{ url_for('puzzle1') }}'">Go to Puzzle 1</button>
     <button onclick="location.href='{{ url_for('puzzle2') }}'">Go to Puzzle 2</button>
 
@@ -54,6 +57,6 @@
 
             // Update the timer every second
             const timerInterval = setInterval(updateTimer, 1000);
-    </script>
+    </script>#
 </body>
 </html>

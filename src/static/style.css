@@ -45,7 +45,7 @@ button {
 }
 
     /* Button hover effect */
-    button:hover {
+button:hover {
         background-color: #222;
         transform: scale(1.05);
     }
@@ -55,10 +55,27 @@ button {
         outline: none;
         box-shadow: 0 0 10px rgba(0, 123, 255, 0.8);
     }
+.hidden{
+    font-size:5px;
+    color:transparent;
+    /*display:none;*/
+    padding: 1px 1px;
+
+}
 div {
     max-width: 75%;
     margin: 0 auto;
     text-align: center;
+}
+.postit {
+    background-color: #ffff99; /* Light yellow background */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    margin: 20px 0;
+    display: inline-block; /* Makes it fit content */
+    text-align: left;
+    font-weight: bold;
 }
 /* Timer styling */
 .timer {

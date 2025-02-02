@@ -6,16 +6,28 @@
 
 </head>
 <body>
+    <button class="hidden" onclick="location.href='/testPuzzle1'">FIX</button>
     <h1>Puzzle 1</h1>
     <!-- PLEASE WRITE THE INSTRUCTIONS BETWEEN HERE -->
     <!--- Explaination of puzzle 1 here, this is meant to tell them how the puzzle works/what to do-->
     <div>
         <p>The asteroid's ETA of 20 minutes leaves you just 10 minutes to reactivate the rocket's systems and send it out to deflect the asteroid. However, the ravages of time have not left the rocket's systems untouched, and the first thing you find upon arrival is that the power systems of the site have failed. Thankfully you find that the failure of the power grid is localized in one area: the resistors of the primary generator have failed with age. With so little time remaining, you cannot rely on outside help. You must repair the broken circuits and revitalize the facility yourselves.</p>
         <p>To solve the puzzle and resupply power to the facility, you need to use the <b>potential voltage divider</b> on the right to go from a <b>5v</b> input, to a <b>3.3v</b> output. You can use the resistors in the container above to plug into the slots on the circuit board. You should spend some time calculating this with pen and paper as there are more combinations than possible to brute force.</p>
+        <p>You find a post-it under the desk that says:</p>
+        <div class="postit">
+            <p>All numbers in Ohms</p>
+            <p>Red is 15</p>
+            <p>Black is 30</p>
+            <p>Blue is 45</p>
+            <p>White is 60</p>
+            <p>Each resistor on the left side is 15</p>
+        </div>
+
         <p>Quick Tip: when a resistor isnt plugged in, that branch is NOT connected</p>
     </div>
     <!-- AND HERE -->
     <button onclick="location.href='/'">Back</button>
     <button onclick="location.href='/puzzle1/checkCompletion'">UNLOCK PUZZLE 2</button>
+
 </body>
 </html>

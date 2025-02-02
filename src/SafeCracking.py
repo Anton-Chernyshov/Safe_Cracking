@@ -101,10 +101,14 @@ def check_launch_code(code):
     global launchCodeEntered
     if code == rocketLaunchCode:
         print("Correct Code! Unlocking Rocket")
+        #################
+        # WIN CONDITION HERE ( you stupid itiot)
         unlockServo(lockingServoPWM)  # Unlock the rocket
+        unlockServo(rocketServoPWM)
+
         launchCodeEntered = True  # Mark as entered
     else:
-        print("Incorrect Code. Try Again.")
+        print(f"Incorrect Code. Try Again. you entered {code}")
 
 # Attach keypress function to keypad
 keypad.registerKeyPressHandler(key_pressed)
@@ -178,15 +182,27 @@ def puzzle2():
     
 @app.route("/puzzle1/checkCompletion")
 def checkCompletion():
+    print("Checking Puzzle 1 Completion...")  # Debugging statement
+    
     for _ in range(5):  
-        data = getData().strip()  # Strip unwanted characters
+        data = getData().strip()  # Strip whitespace and newline
+        print(f"Received Data from Arduino: '{data}'")  # Debugging statement
+
         if data == "1":
+            print("Puzzle 1 Complete!")  # Debugging statement
             session["puzzle1Complete"] = True
             break
+        sleep(0.1)  # Allow slight delay for stability
+
+    # Debugging print statements
+    print(f"Session puzzle1Complete: {session.get('puzzle1Complete', False)}")
 
     if session.get("puzzle1Complete", False):
+        print("Unlocking Puzzle 2!")  # Debugging statement
         session["puzzle2Unlocked"] = True
         return redirect(url_for("puzzle2"))
+
+    print("Redirecting back to Puzzle 1")  # Debugging statement
     return redirect(url_for("puzzle1"))
 
 @app.route("/puzzle2/checkCompletion")
@@ -206,16 +222,16 @@ def launchCode():
 
     return render_template("code.html", LAUNCH_CODE=rocketLaunchCode)
 
-@app.route("/victory")
-def checkWin():
-    if session.get("puzzle1Complete") and session.get("puzzle2Complete") and session.get("launchCodeEntered", False):
-        if not session.get("safeUnlocked", False):  # Only unlock once
-            unlockServo(lockingServoPWM)  # Unlock the safe
-            unlockServo(rocketServoPWM)  # Unlock the rocket (again)
-            session["safeUnlocked"] = True  # Mark as unlocked
-        return render_template("victory.html")
-    
-    return redirect(url_for("launchCode"))  # Ensure they see the launch code first
+#@app.route("/victory")
+#def checkWin():
+#    if session.get("puzzle1Complete") and session.get("puzzle2Complete") and session.get("launchCodeEntered", False):
+#        if not session.get("safeUnlocked", False):  # Only unlock once
+#            unlockServo(lockingServoPWM)  # Unlock the safe
+#            unlockServo(rocketServoPWM)  # Unlock the rocket (again)
+#            session["safeUnlocked"] = True  # Mark as unlocked
+#        return render_template("victory.html")
+#   
+#    return redirect(url_for("launchCode"))  # Ensure they see the launch code first
 
 
 
